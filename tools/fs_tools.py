@@ -1,0 +1,202 @@
+import os
+import shutil
+from pathlib import Path
+from typing import Any, Dict, List
+
+def _resolve_path(path: str) -> str:
+    """Expands shortcuts to full paths. Supports composite paths: desktop/folder/file"""
+    home = Path.home()
+    shortcuts = {
+        "desktop": str(home / "Desktop"),
+        "documents": str(home / "Documents"),
+        "downloads": str(home / "Downloads"),
+    }
+
+    path = path.strip()
+
+    # Replace ~ with home directory
+    if path.startswith("~"):
+        return str(home) + path[1:]
+
+    # Check shortcuts (including composite paths)
+    path_lower = path.lower()
+    for shortcut, full_path in shortcuts.items():
+        if path_lower == shortcut:
+            return full_path
+        if path_lower.startswith(shortcut + "/") or path_lower.startswith(shortcut + "\\"):
+            # Replace shortcut with full path, keep the remainder
+            remainder = path[len(shortcut):]
+            return full_path + remainder
+
+    return path
+
+def create(path: str, name: str, item_type: str = "folder", content: str = "") -> Dict[str, str]:
+    """Creates a file or folder
+    item_type: 'file' | 'folder'
+    content: file content (only if item_type='file')
+    """
+    try:
+        resolved_path = _resolve_path(path)
+        full_path = Path(resolved_path) / name
+
+        if item_type == "folder":
+            full_path.mkdir(parents=True, exist_ok=True)
+            return {"status": "success", "path": str(full_path), "type": "folder"}
+        elif item_type == "file":
+            full_path.parent.mkdir(parents=True, exist_ok=True)
+            full_path.write_text(content, encoding="utf-8")
+            return {"status": "success", "path": str(full_path), "type": "file"}
+        else:
+            return {"status": "error", "message": f"Unknown type: {item_type}. Use 'file' or 'folder'"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def copy(source: str, destination: str) -> Dict[str, str]:
+    """Copies a file or folder"""
+    try:
+        src = Path(_resolve_path(source))
+        dst = Path(_resolve_path(destination))
+
+        if not src.exists():
+            return {"status": "error", "message": f"Source not found: {source}"}
+
+        if src.is_file():
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+        else:
+            shutil.copytree(src, dst, dirs_exist_ok=True)
+
+        return {"status": "success", "source": str(src), "destination": str(dst)}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def move(source: str, destination: str) -> Dict[str, str]:
+    """Moves a file or folder"""
+    try:
+        src = Path(_resolve_path(source))
+        dst = Path(_resolve_path(destination))
+
+        if not src.exists():
+            return {"status": "error", "message": f"Source not found: {source}"}
+
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(src), str(dst))
+
+        return {"status": "success", "source": str(src), "destination": str(dst)}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def delete(path: str) -> Dict[str, str]:
+    """Deletes a file or folder"""
+    try:
+        target = Path(_resolve_path(path))
+
+        if not target.exists():
+            return {"status": "error", "message": f"Not found: {path}"}
+
+        if target.is_file():
+            target.unlink()
+        else:
+            shutil.rmtree(target)
+
+        return {"status": "success", "deleted": str(target)}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def batch_create(items: List[Dict[str, str]]) -> Dict[str, List[Dict[str, str]]]:
+    """Batch creation of files and folders
+    items: list of objects with fields {path, name, item_type, content}
+    """
+    results = []
+    for item in items:
+        try:
+            result = create(
+                path=item.get("path", ""),
+                name=item.get("name", ""),
+                item_type=item.get("item_type", "folder"),
+                content=item.get("content", "")
+            )
+            results.append(result)
+        except Exception as e:
+            results.append({"status": "error", "message": str(e), "item": item})
+    return {"status": "success", "results": results}
+
+def batch_copy(items: List[Dict[str, str]]) -> Dict[str, List[Dict[str, str]]]:
+    """Batch copying of files and folders
+    items: list of objects with fields {source, destination}
+    """
+    results = []
+    for item in items:
+        try:
+            result = copy(
+                source=item.get("source", ""),
+                destination=item.get("destination", "")
+            )
+            results.append(result)
+        except Exception as e:
+            results.append({"status": "error", "message": str(e), "item": item})
+    return {"status": "success", "results": results}
+
+def batch_move(items: List[Dict[str, str]]) -> Dict[str, List[Dict[str, str]]]:
+    """Batch moving of files and folders
+    items: list of objects with fields {source, destination}
+    """
+    results = []
+    for item in items:
+        try:
+            result = move(
+                source=item.get("source", ""),
+                destination=item.get("destination", "")
+            )
+            results.append(result)
+        except Exception as e:
+            results.append({"status": "error", "message": str(e), "item": item})
+    return {"status": "success", "results": results}
+
+def batch_delete(paths: List[str]) -> Dict[str, List[Dict[str, str]]]:
+    """Batch deletion of files and folders
+    paths: list of paths to delete
+    """
+    results = []
+    for path in paths:
+        try:
+            result = delete(path)
+            results.append(result)
+        except Exception as e:
+            results.append({"status": "error", "message": str(e), "path": path})
+    return {"status": "success", "results": results}
+
+def list_dir(path: str) -> Dict[str, Any]:
+    """Shows folder contents: files and subfolders"""
+    try:
+        target = Path(_resolve_path(path))
+        if not target.exists():
+            return {"status": "error", "message": f"Not found: {path}"}
+        if not target.is_dir():
+            return {"status": "error", "message": f"Not a directory: {path}"}
+
+        items = []
+        for item in target.iterdir():
+            items.append({
+                "name": item.name,
+                "type": "folder" if item.is_dir() else "file",
+                "path": str(item)
+            })
+
+        return {"status": "success", "path": str(target), "items": items}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def read_file(path: str) -> Dict[str, str]:
+    """Reads the contents of a text file"""
+    try:
+        target = Path(_resolve_path(path))
+        if not target.exists():
+            return {"status": "error", "message": f"Not found: {path}"}
+        if not target.is_file():
+            return {"status": "error", "message": f"Not a file: {path}"}
+
+        content = target.read_text(encoding="utf-8")
+        return {"status": "success", "path": str(target), "content": content}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
