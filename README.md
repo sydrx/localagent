@@ -36,8 +36,8 @@ Local AI assistant with file system access. Works via LM Studio API with tool ca
 ## Installation
 
 ```bash
-git clone <url>
-cd local_llm_framework
+git clone https://github.com/sydrx/localagent.git
+cd localagent
 pip install openai
 ```
 
