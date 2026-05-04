@@ -1,5 +1,7 @@
 # LocalAgent
 
+[![Version](https://img.shields.io/badge/version-1.1.0-blue)](https://github.com/sydrx/localagent)
+
 Local AI assistant with file system access. Works via LM Studio API with tool calling support.
 
 ## Features
@@ -20,6 +22,8 @@ Local AI assistant with file system access. Works via LM Studio API with tool ca
 | `delete` / `batch_delete` | Delete file(s) or folder(s) |
 | `list_dir` | View folder contents |
 | `read_file` | Read file contents |
+| `edit` / `batch_edit` | Edit file(s): replace, append, or prepend content |
+| `open` / `batch_open` | Open file(s) with default application |
 
 ## Path shortcuts
 
@@ -64,6 +68,12 @@ python main.py
 ----------------------------------------
 👤 You: delete everything in the test1 folder
 🤖 LocalAgent: Deleted readme.txt and data.json from the test1 folder.
+----------------------------------------
+👤 You: add "Hello World" to the end of readme.txt
+🤖 LocalAgent: Appended text to readme.txt.
+----------------------------------------
+👤 You: open test1/data.json
+🤖 LocalAgent: Opened data.json with the default application.
 ----------------------------------------
 👤 You: exit
 👋 Goodbye!

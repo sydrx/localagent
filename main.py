@@ -12,6 +12,8 @@ You have access to the file system through tools:
 - delete / batch_delete — delete file(s) or folder(s)
 - list_dir — view folder contents
 - read_file — read file contents
+- edit / batch_edit — edit file(s): replace, append, or prepend content
+- open / batch_open — open file(s) with default application
 
 Before bulk operations:
 1. Call list_dir to see what's in the folder

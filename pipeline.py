@@ -4,7 +4,7 @@ from client import LMStudioClient
 from memory import ConversationMemory
 from prompt import PromptTemplate
 from typing import AsyncIterator
-from tools.fs_tools import (create, copy, move, delete, batch_create, batch_copy, batch_move, batch_delete, list_dir, read_file)
+from tools.fs_tools import (create, copy, move, delete, batch_create, batch_copy, batch_move, batch_delete, list_dir, read_file, edit, open_file, batch_edit, batch_open)
 
 class LLMPipeline:
     def __init__(self, config: LLMConfig, system_prompt: str):
@@ -37,6 +37,14 @@ class LLMPipeline:
                 result = list_dir(**args)
             elif tool_name == "read_file":
                 result = read_file(**args)
+            elif tool_name == "edit":
+                result = edit(**args)
+            elif tool_name == "open":
+                result = open_file(**args)
+            elif tool_name == "batch_edit":
+                result = batch_edit(**args)
+            elif tool_name == "batch_open":
+                result = batch_open(**args)
             else:
                 return json.dumps({"error": f"Unknown tool: {tool_name}"}, ensure_ascii=False)
             return json.dumps(result, ensure_ascii=False)

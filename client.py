@@ -100,6 +100,50 @@ def _batch_schemas() -> list:
                     "required": ["paths"]
                 }
             }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "batch_edit",
+                "description": "Batch editing of multiple files in a single call.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "items": {
+                            "type": "array",
+                            "description": "List of edit operations",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "path": {"type": "string", "description": "Path to the file to edit"},
+                                    "content": {"type": "string", "description": "New content or text to add"},
+                                    "mode": {"type": "string", "enum": ["replace", "append", "prepend"], "description": "How to modify: 'replace', 'append', or 'prepend'"}
+                                },
+                                "required": ["path", "content"]
+                            }
+                        }
+                    },
+                    "required": ["items"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "batch_open",
+                "description": "Batch opening multiple files with default applications.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "paths": {
+                            "type": "array",
+                            "description": "List of paths to open",
+                            "items": {"type": "string"}
+                        }
+                    },
+                    "required": ["paths"]
+                }
+            }
         }
     ]
 
@@ -188,6 +232,36 @@ TOOLS_SCHEMA = [
                 "type": "object",
                 "properties": {
                     "path": {"type": "string", "description": "Path to the file"}
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "edit",
+            "description": "Edit an existing file. Modes: replace (overwrite), append (add to end), prepend (add to beginning)",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Path to the file to edit"},
+                    "content": {"type": "string", "description": "New content or text to add"},
+                    "mode": {"type": "string", "enum": ["replace", "append", "prepend"], "description": "How to modify: 'replace' (overwrite), 'append' (add to end), 'prepend' (add to beginning)"}
+                },
+                "required": ["path", "content"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "open",
+            "description": "Open a file with the default application (Notepad for text files, etc.)",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Path to the file to open"}
                 },
                 "required": ["path"]
             }

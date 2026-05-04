@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -200,3 +201,81 @@ def read_file(path: str) -> Dict[str, str]:
         return {"status": "success", "path": str(target), "content": content}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+def edit(path: str, content: str, mode: str = "replace") -> Dict[str, str]:
+    """Edits an existing file
+    mode: 'replace' | 'append' | 'prepend' — how to modify the file
+    """
+    try:
+        target = Path(_resolve_path(path))
+        if not target.exists():
+            return {"status": "error", "message": f"File not found: {path}"}
+        if not target.is_file():
+            return {"status": "error", "message": f"Not a file: {path}"}
+
+        if mode == "replace":
+            target.write_text(content, encoding="utf-8")
+        elif mode == "append":
+            with open(target, "a", encoding="utf-8") as f:
+                f.write(content)
+        elif mode == "prepend":
+            original = target.read_text(encoding="utf-8")
+            target.write_text(content + original, encoding="utf-8")
+        else:
+            return {"status": "error", "message": f"Unknown mode: {mode}. Use 'replace', 'append', or 'prepend'"}
+
+        return {"status": "success", "path": str(target), "mode": mode}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+def open_file(path: str) -> Dict[str, str]:
+    """Opens a file with the default application"""
+    try:
+        target = Path(_resolve_path(path))
+        if not target.exists():
+            return {"status": "error", "message": f"Not found: {path}"}
+
+        abs_path = str(target.resolve())
+
+        if os.name == 'nt':  # Windows
+            os.startfile(abs_path)
+        elif os.name == 'posix':  # macOS/Linux
+            subprocess.run(['open' if os.uname().sysname == 'Darwin' else 'xdg-open', abs_path], check=True)
+
+        return {"status": "success", "path": abs_path, "action": "opened"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+def batch_edit(items: List[Dict[str, str]]) -> Dict[str, List[Dict[str, str]]]:
+    """Batch editing of files
+    items: list of objects with fields {path, content, mode}
+    """
+    results = []
+    for item in items:
+        try:
+            result = edit(
+                path=item.get("path", ""),
+                content=item.get("content", ""),
+                mode=item.get("mode", "replace")
+            )
+            results.append(result)
+        except Exception as e:
+            results.append({"status": "error", "message": str(e), "item": item})
+    return {"status": "success", "results": results}
+
+
+def batch_open(paths: List[str]) -> Dict[str, List[Dict[str, str]]]:
+    """Batch opening of files
+    paths: list of paths to open
+    """
+    results = []
+    for path in paths:
+        try:
+            result = open_file(path)
+            results.append(result)
+        except Exception as e:
+            results.append({"status": "error", "message": str(e), "path": path})
+    return {"status": "success", "results": results}
