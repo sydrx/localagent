@@ -1,6 +1,6 @@
 # LocalAgent
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue)](https://github.com/sydrx/localagent)
+[![Version](https://img.shields.io/badge/version-1.2.1-blue)](https://github.com/sydrx/localagent)
 
 Local AI assistant with file system access and terminal execution. Works via LM Studio API with tool calling support.
 
@@ -47,6 +47,23 @@ git clone https://github.com/sydrx/localagent.git
 cd localagent
 pip install openai
 ```
+
+## Changelog
+
+### v1.2.1 (Latest)
+- **Improved path handling** — auto-resolve relative paths in `run_command` (e.g., `desktop/script.py`)
+- **Better error tracking** — include `cwd` in response for debugging
+- **Enhanced documentation** — examples of terminal usage
+
+### v1.2.0
+- Added terminal execution support (`run_command`, `run_script`)
+- Support for Python, PowerShell, batch files, and executables
+- Timeout control on command execution
+
+### v1.1.0
+- File system tools (create, copy, move, delete, edit)
+- Batch operations for bulk file actions
+- Smart path shortcuts (desktop, documents, downloads)
 
 ## Launch
 

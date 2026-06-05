@@ -286,17 +286,39 @@ def run_command(command: str, cwd: str = None, timeout: int = 30) -> Dict[str, A
     command: the command to execute (e.g., 'pip install requests' or 'python script.py')
     cwd: working directory (if None, uses current directory or resolves if it's a shortcut)
     timeout: maximum time to wait in seconds (default 30)
+    
+    v1.2.1: Auto-resolve relative paths in commands, better error handling
     """
     try:
         # Resolve working directory if provided
+        resolved_cwd = None
         if cwd:
-            cwd = _resolve_path(cwd)
+            resolved_cwd = _resolve_path(cwd)
+        
+        # Try to auto-resolve relative paths in the command if cwd is not provided
+        # This helps when users specify paths like 'desktop/script.py'
+        if not cwd and ("/" in command or "\\" in command):
+            # Check if command starts with a path-like pattern
+            parts = command.split(" ")
+            if len(parts) > 0:
+                first_part = parts[0]
+                # Check if first part looks like a relative path
+                if (first_part.startswith("desktop") or first_part.startswith("documents") or 
+                    first_part.startswith("downloads")):
+                    # Try to resolve it
+                    resolved_path = _resolve_path(first_part)
+                    if Path(resolved_path).exists():
+                        # Replace the relative path with absolute path (with quotes if contains spaces)
+                        if " " in resolved_path:
+                            command = command.replace(first_part, f'"{resolved_path}"', 1)
+                        else:
+                            command = command.replace(first_part, resolved_path, 1)
         
         # Use shell=True to support complex commands, pipes, etc.
         result = subprocess.run(
             command,
             shell=True,
-            cwd=cwd,
+            cwd=resolved_cwd,
             capture_output=True,
             text=True,
             timeout=timeout
@@ -308,19 +330,22 @@ def run_command(command: str, cwd: str = None, timeout: int = 30) -> Dict[str, A
             "return_code": result.returncode,
             "stdout": result.stdout,
             "stderr": result.stderr,
-            "output": result.stdout if result.returncode == 0 else result.stderr
+            "output": result.stdout if result.returncode == 0 else result.stderr,
+            "cwd": resolved_cwd
         }
     except subprocess.TimeoutExpired:
         return {
             "status": "error",
             "message": f"Command timed out after {timeout} seconds",
-            "command": command
+            "command": command,
+            "cwd": resolved_cwd
         }
     except Exception as e:
         return {
             "status": "error",
             "message": str(e),
-            "command": command
+            "command": command,
+            "cwd": resolved_cwd
         }
 
 
