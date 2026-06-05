@@ -279,3 +279,117 @@ def batch_open(paths: List[str]) -> Dict[str, List[Dict[str, str]]]:
         except Exception as e:
             results.append({"status": "error", "message": str(e), "path": path})
     return {"status": "success", "results": results}
+
+
+def run_command(command: str, cwd: str = None, timeout: int = 30) -> Dict[str, Any]:
+    """Executes a shell command and returns the result
+    command: the command to execute (e.g., 'pip install requests' or 'python script.py')
+    cwd: working directory (if None, uses current directory or resolves if it's a shortcut)
+    timeout: maximum time to wait in seconds (default 30)
+    """
+    try:
+        # Resolve working directory if provided
+        if cwd:
+            cwd = _resolve_path(cwd)
+        
+        # Use shell=True to support complex commands, pipes, etc.
+        result = subprocess.run(
+            command,
+            shell=True,
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        
+        return {
+            "status": "success",
+            "command": command,
+            "return_code": result.returncode,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "output": result.stdout if result.returncode == 0 else result.stderr
+        }
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "error",
+            "message": f"Command timed out after {timeout} seconds",
+            "command": command
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "command": command
+        }
+
+
+def run_script(path: str, args: str = "", timeout: int = 60) -> Dict[str, Any]:
+    """Runs a Python script or other executable file
+    path: path to the script/executable
+    args: command line arguments to pass to the script (e.g., "arg1 arg2")
+    timeout: maximum time to wait in seconds (default 60)
+    """
+    try:
+        target = Path(_resolve_path(path))
+        
+        if not target.exists():
+            return {"status": "error", "message": f"File not found: {path}"}
+        
+        if not target.is_file():
+            return {"status": "error", "message": f"Not a file: {path}"}
+        
+        # Build command based on file extension
+        abs_path = str(target.resolve())
+        file_ext = target.suffix.lower()
+        
+        if file_ext == ".py":
+            # Python script
+            command = f'python "{abs_path}"'
+        elif file_ext in [".ps1"]:
+            # PowerShell script
+            command = f'powershell -ExecutionPolicy Bypass -File "{abs_path}"'
+        elif file_ext in [".bat", ".cmd"]:
+            # Batch file
+            command = f'"{abs_path}"'
+        elif file_ext in [".exe"]:
+            # Executable
+            command = f'"{abs_path}"'
+        else:
+            # Try to execute directly
+            command = f'"{abs_path}"'
+        
+        # Add arguments if provided
+        if args:
+            command += f' {args}'
+        
+        # Execute
+        result = subprocess.run(
+            command,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=str(target.parent)
+        )
+        
+        return {
+            "status": "success",
+            "script": str(target),
+            "return_code": result.returncode,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "output": result.stdout if result.returncode == 0 else result.stderr
+        }
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "error",
+            "message": f"Script timed out after {timeout} seconds",
+            "script": path
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "script": path
+        }

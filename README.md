@@ -1,8 +1,8 @@
 # LocalAgent
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue)](https://github.com/sydrx/localagent)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue)](https://github.com/sydrx/localagent)
 
-Local AI assistant with file system access. Works via LM Studio API with tool calling support.
+Local AI assistant with file system access and terminal execution. Works via LM Studio API with tool calling support.
 
 ## Features
 
@@ -11,6 +11,7 @@ Local AI assistant with file system access. Works via LM Studio API with tool ca
 - **📂 View contents** — see what's inside folders before operations
 - **🚀 Batch operations** — perform bulk actions on multiple files
 - **🏠 Smart paths** — use shortcuts like `desktop`, `documents`, `downloads`
+- **⌨️ Terminal execution** — run commands, scripts, and executables directly from the agent
 
 ## Tools
 
@@ -24,6 +25,8 @@ Local AI assistant with file system access. Works via LM Studio API with tool ca
 | `read_file` | Read file contents |
 | `edit` / `batch_edit` | Edit file(s): replace, append, or prepend content |
 | `open` / `batch_open` | Open file(s) with default application |
+| `run_command` | Execute shell commands (PowerShell/bash) |
+| `run_script` | Run Python scripts, PowerShell scripts, batch files, or executables |
 
 ## Path shortcuts
 
@@ -75,8 +78,32 @@ python main.py
 👤 You: open test1/data.json
 🤖 LocalAgent: Opened data.json with the default application.
 ----------------------------------------
+👤 You: install python requests library
+🤖 LocalAgent: Successfully installed requests library via pip.
+----------------------------------------
+👤 You: show me Python version
+🤖 LocalAgent: Python 3.10.5
+----------------------------------------
+👤 You: create a script that prints "Hello from Python" and run it
+🤖 LocalAgent: Created hello_script.py and executed it. Output: Hello from Python
+----------------------------------------
 👤 You: exit
 👋 Goodbye!
+```
+
+## Terminal Examples
+
+The agent can now execute commands and scripts:
+
+```
+👤 You: run pip install numpy
+🤖 LocalAgent: Successfully installed numpy.
+
+👤 You: what python packages do I have installed?
+🤖 LocalAgent: [Lists installed packages from pip list]
+
+👤 You: create a python script on desktop that calculates fibonacci numbers and run it with argument 10
+🤖 LocalAgent: Created and executed the script. Output: [fibonacci sequence up to 10]
 ```
 
 ## Architecture

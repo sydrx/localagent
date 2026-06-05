@@ -266,6 +266,38 @@ TOOLS_SCHEMA = [
                 "required": ["path"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "run_command",
+            "description": "Execute a shell command and get the output. Works with PowerShell on Windows or bash/sh on Linux/macOS.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {"type": "string", "description": "The command to execute (e.g., 'pip install requests', 'python -c \"print(1+1)\"', 'dir', etc.)"},
+                    "cwd": {"type": "string", "description": "Optional working directory (desktop, documents, or full path)", "default": ""},
+                    "timeout": {"type": "integer", "description": "Timeout in seconds (default 30)", "default": 30}
+                },
+                "required": ["command"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "run_script",
+            "description": "Run a Python script, PowerShell script, batch file, or executable. Automatically detects file type by extension.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Path to the script or executable file"},
+                    "args": {"type": "string", "description": "Optional command line arguments (e.g., 'arg1 arg2 --flag value')", "default": ""},
+                    "timeout": {"type": "integer", "description": "Timeout in seconds (default 60)", "default": 60}
+                },
+                "required": ["path"]
+            }
+        }
     }
 ]
 
